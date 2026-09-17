@@ -24,7 +24,9 @@ Origram is an Xposed module (libxposed API 102, running on Vector) that applies 
 1. Run the device check.
 2. Bump `versionCode` and `versionName` in `app/build.gradle.kts`, and add a `## <versionName>` section to `CHANGELOG.md`.
 3. Update the store page in `modules-repo/` (README.md, SUMMARY) when features or the tested Telegram version change.
-4. Commit, then push the tag `<versionCode>-<versionName>`. The workflow refuses a tag that doesn't match the APK, an APK not signed with the Origram key, or a version with no changelog section.
+4. Commit and push, then push the tag: `git tag 2-0.2.0 && git push origin 2-0.2.0`. The workflow refuses a tag that doesn't match the APK, an APK not signed with the Origram key, or a version with no changelog section. If it refuses, delete the tag (`git push origin :2-0.2.0 && git tag -d 2-0.2.0`), fix the problem, and tag again.
+
+`gh workflow run release.yml` runs the same checks without publishing. The workflow uses three repo secrets: `ORIGRAM_KEYSTORE_BASE64`, `ORIGRAM_STORE_PASSWORD`, and `MODULES_REPO_TOKEN`. `MODULES_REPO_TOKEN` is a classic PAT with only `public_repo`, because fine-grained tokens can't reach an org repo you only collaborate on. It expires, so when "Check Modules Repo access" fails, the owner generates a new token and replaces the secret.
 
 The org repo only grants the Maintain role, so its description and homepage can only be changed by the org admins, via an `[issue]` in `Xposed-Modules-Repo/submission`.
 
