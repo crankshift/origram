@@ -40,7 +40,7 @@ Only tap the screen with `adb shell input tap` after confirming which app is in 
 ### Ad Removal
 
 - The launch log lists `Sponsored Message`, `Sponsored Message cache`, `Sponsored Peer`, `Channel Suggestion`, `Promo Chat and Premium Promo` and `Ad Removal` as active.
-- **Sponsored Message:** open a large public channel (`adb shell am start -a android.intent.action.VIEW -d 'tg://resolve?domain=cointelegraph' $P`). The log shows `Answered TL_messages_getSponsoredMessages locally`, and no sponsored message sits below the latest post.
+- **Sponsored Message:** open a large public channel (`adb shell am start -a android.intent.action.VIEW -d 'tg://resolve?domain=cointelegraph' $P`). No sponsored message sits below the latest post. Channel and bot chats never send the request, so there is no log line for them. Playing a long video in the media viewer logs `Answered TL_messages_getSponsoredMessages locally`.
 - **Channel Suggestion:** open that channel's profile. The log shows `Answered TL_channels_getChannelRecommendations locally`, and there is no "Similar channels" tab.
 - **Sponsored Peer:** type 4 or more characters into the chat-list search. The log shows `Answered TL_contacts_getSponsoredPeers locally`.
 - **Promo Chat / Premium Promo:** the chat list shows no pinned promo chat and no Premium banner. Telegram refreshes promo data on its own schedule, so `Removed … from promo data` appears only when the server actually sends such content.
