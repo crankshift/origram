@@ -1,0 +1,112 @@
+name: Release
+
+# Pushing a tag `<versionCode>-<versionName>` (e.g. `2-0.2.0`) publishes that version to this repo and
+# to the Xposed Modules Repo. Running it by hand builds and checks the signed APK without publishing.
+on:
+  push:
+    tags: ['[0-9]*-*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release
+
+env:
+  MODULES_REPO: Xposed-Modules-Repo/io.github.crankshift.origram
+  # Certificate of the Origram release key. Installed copies only accept updates signed with it.
+  CERT_SHA256: 13557c14f66965fedd89fcb078f2c6fcc94c189e956d916a948c1e5bdbec6847
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v6
+
+      - name: Restore signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ORIGRAM_KEYSTORE_BASE64 }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/origram.jks"
+          echo "ORIGRAM_STORE_FILE=$RUNNER_TEMP/origram.jks" >> "$GITHUB_ENV"
+
+      - name: Build and test
+        env:
+          ORIGRAM_STORE_PASSWORD: ${{ secrets.ORIGRAM_STORE_PASSWORD }}
+          ORIGRAM_KEY_PASSWORD: ${{ secrets.ORIGRAM_STORE_PASSWORD }}
+          ORIGRAM_KEY_ALIAS: origram
+        run: ./gradlew test assembleRelease --console=plain
+
+      - name: Check version, signature and changelog
+        id: apk
+        run: |
+          tools="$ANDROID_HOME/build-tools/$(ls "$ANDROID_HOME/build-tools" | sort -V | tail -1)"
+          apk=app/build/outputs/apk/release/app-release.apk
+          read -r code name < <("$tools/aapt2" dump badging "$apk" |
+            sed -nE "s/^package: .*versionCode='([^']+)' versionName='([^']+)'.*/\1 \2/p")
+          echo "APK version: $code-$name"
+          if [ "$GITHUB_REF_TYPE" = tag ] && [ "$GITHUB_REF_NAME" != "$code-$name" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match the APK version $code-$name"
+            exit 1
+          fi
+
+          cert=$("$tools/apksigner" verify --print-certs "$apk" |
+            grep -m1 -oE 'certificate SHA-256 digest: [0-9a-f]+' | awk '{print $NF}')
+          if [ "$cert" != "$CERT_SHA256" ]; then
+            echo "::error::APK is signed with $cert, not the Origram release key"
+            exit 1
+          fi
+
+          awk -v header="## $name" '$0 == header {found=1; next} /^## / {found=0} found' CHANGELOG.md > "$RUNNER_TEMP/notes.md"
+          if ! grep -q '[^[:space:]]' "$RUNNER_TEMP/notes.md"; then
+            echo "::error::CHANGELOG.md has no '## $name' section"
+            exit 1
+          fi
+
+          cp "$apk" "$RUNNER_TEMP/origram-$name.apk"
+          echo "tag=$code-$name" >> "$GITHUB_OUTPUT"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "apk=$RUNNER_TEMP/origram-$name.apk" >> "$GITHUB_OUTPUT"
+
+      - name: Publish release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ steps.apk.outputs.tag }}
+          NAME: ${{ steps.apk.outputs.name }}
+          APK: ${{ steps.apk.outputs.apk }}
+        run: |
+          gh release view "$TAG" > /dev/null 2>&1 ||
+            gh release create "$TAG" "$APK" --verify-tag --title "Origram $NAME" --notes-file "$RUNNER_TEMP/notes.md"
+
+      # The Modules Repo shows README.md and SUMMARY as the store page and only lists a release that
+      # has its APK attached from the start.
+      - name: Publish to the Xposed Modules Repo
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ secrets.MODULES_REPO_TOKEN }}
+          TAG: ${{ steps.apk.outputs.tag }}
+          NAME: ${{ steps.apk.outputs.name }}
+          APK: ${{ steps.apk.outputs.apk }}
+        run: |
+          store="$RUNNER_TEMP/modules-repo"
+          git clone --depth 1 "https://x-access-token:$GH_TOKEN@github.com/$MODULES_REPO.git" "$store"
+          cp modules-repo/* "$store/"
+          git -C "$store" add -A
+          if ! git -C "$store" diff --cached --quiet; then
+            git -C "$store" -c user.name=crankshift -c user.email=24224073+crankshift@users.noreply.github.com \
+              commit -m "Sync store page from crankshift/origram $TAG"
+            git -C "$store" push
+          fi
+
+          { cat "$RUNNER_TEMP/notes.md"; echo; echo "Source: https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG"; } > "$RUNNER_TEMP/store-notes.md"
+          gh release view "$TAG" -R "$MODULES_REPO" > /dev/null 2>&1 ||
+            gh release create "$TAG" "$APK" -R "$MODULES_REPO" --target main --title "Origram $NAME" --notes-file "$RUNNER_TEMP/store-notes.md"

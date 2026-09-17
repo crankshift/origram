@@ -17,6 +17,17 @@ Origram is an Xposed module (libxposed API 102, running on Vector) that applies 
 - Read toggles at call time through `TweakContext.isEnabled`. Keys and defaults live only in `settings/Settings.kt`, which both the settings screen and the hooks use.
 - Check class, method and TL names against Telegram source before writing a hook. That source is github.com/DrKLO/Telegram `master`, which marks releases by commit message ("update to X.Y.Z"), not by tags.
 
+## Releasing
+
+`crankshift/origram` is the source of truth. The Xposed Modules Repo copy (`Xposed-Modules-Repo/io.github.crankshift.origram`) is only a store page, filled by `.github/workflows/release.yml`.
+
+1. Run the device check.
+2. Bump `versionCode` and `versionName` in `app/build.gradle.kts`, and add a `## <versionName>` section to `CHANGELOG.md`.
+3. Update the store page in `modules-repo/` (README.md, SUMMARY) when features or the tested Telegram version change.
+4. Commit, then push the tag `<versionCode>-<versionName>`. The workflow refuses a tag that doesn't match the APK, an APK not signed with the Origram key, or a version with no changelog section.
+
+The org repo only grants the Maintain role, so its description and homepage can only be changed by the org admins, via an `[issue]` in `Xposed-Modules-Repo/submission`.
+
 ## Device check
 
 Run `docs/device-check.md` before every release and after every Telegram update.
