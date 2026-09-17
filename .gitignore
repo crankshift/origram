@@ -1,0 +1,19 @@
+# Gradle / build output
+.gradle/
+.kotlin/
+build/
+local.properties
+
+# IDE
+.idea/
+*.iml
+.DS_Store
+
+# Signing material never lives in the repo
+*.jks
+*.keystore
+*.p12
+keystore.properties
+
+# Pulled Telegram APKs and decompiled output used for hook verification
+/work/

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Folded paper plane, drawn inside the 66dp adaptive-icon safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M30,52 L78,32 L66,76 L52,62 Z" />
+    <path
+        android:fillColor="#D6ECF9"
+        android:pathData="M52,62 L78,32 L48,74 Z" />
+</vector>

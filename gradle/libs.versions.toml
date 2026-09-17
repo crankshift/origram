@@ -1,0 +1,23 @@
+[versions]
+agp = "9.4.0"
+kotlin = "2.4.20"
+libxposed = "102.0.0"
+composeBom = "2026.09.00"
+activityCompose = "1.13.0"
+junit = "6.1.3"
+
+[libraries]
+libxposed-api = { module = "io.github.libxposed:api", version.ref = "libxposed" }
+libxposed-service = { module = "io.github.libxposed:service", version.ref = "libxposed" }
+compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
+compose-material3 = { module = "androidx.compose.material3:material3" }
+compose-ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview" }
+compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling" }
+activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
+junit-bom = { module = "org.junit:junit-bom", version.ref = "junit" }
+junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
+junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+
+[plugins]
+android-application = { id = "com.android.application", version.ref = "agp" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
