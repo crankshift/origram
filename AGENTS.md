@@ -12,7 +12,9 @@ Origram is an Xposed module (libxposed API 102, running on Vector) that applies 
 
 - Take hook targets only from `org.telegram.messenger.*` and `org.telegram.tgnet.*`. Official builds rename `org.telegram.ui.*` on every release (see `docs/adr/0002-hook-only-name-kept-classes.md`).
 - Write hooks in the libxposed 102 interceptor style: `hook(method).intercept { chain -> … }`. Translate snippets from legacy-API modules before using them (see `docs/adr/0001-libxposed-api-102.md`).
-- Hooks are fail-soft. Resolve classes and methods inside a guarded install step and log failures with the `Origram` tag. When a target is missing, log it once and disable that Tweak so Telegram keeps running.
+- Hooks are fail-soft. Install each independent part of a Tweak inside `TweakContext.guard`, which logs a failure with the `Origram` tag and leaves only that part inactive, so Telegram keeps running.
+- Block Telegram API requests through `RequestFilter` (one hook on `ConnectionsManager#sendRequestInternal`) instead of adding another network hook. When a response must be kept but edited, hook the TL class's `readParams`.
+- Read toggles at call time through `TweakContext.isEnabled`. Keys and defaults live only in `settings/Settings.kt`, which both the settings screen and the hooks use.
 - Check class, method and TL names against Telegram source before writing a hook. That source is github.com/DrKLO/Telegram `master`, which marks releases by commit message ("update to X.Y.Z"), not by tags.
 
 ## Device check
