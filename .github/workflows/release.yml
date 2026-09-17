@@ -76,6 +76,15 @@ jobs:
           echo "name=$name" >> "$GITHUB_OUTPUT"
           echo "apk=$RUNNER_TEMP/origram-$name.apk" >> "$GITHUB_OUTPUT"
 
+      - name: Check Modules Repo access
+        env:
+          GH_TOKEN: ${{ secrets.MODULES_REPO_TOKEN }}
+        run: |
+          if [ "$(gh api "repos/$MODULES_REPO" --jq .permissions.push)" != true ]; then
+            echo "::error::MODULES_REPO_TOKEN cannot push to $MODULES_REPO"
+            exit 1
+          fi
+
       - name: Publish release
         if: github.ref_type == 'tag'
         env:
