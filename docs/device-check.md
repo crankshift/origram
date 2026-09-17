@@ -39,9 +39,9 @@ Only tap the screen with `adb shell input tap` after confirming which app is in 
 
 ### Ad Removal
 
-- The launch log lists `Sponsored Message`, `Sponsored Peer`, `Channel Suggestion`, `Promo Chat and Premium Promo` and `Ad Removal` as active.
+- The launch log lists `Sponsored Message`, `Sponsored Message cache`, `Sponsored Peer`, `Channel Suggestion`, `Promo Chat and Premium Promo` and `Ad Removal` as active.
 - **Sponsored Message:** open a large public channel (`adb shell am start -a android.intent.action.VIEW -d 'tg://resolve?domain=cointelegraph' $P`). The log shows `Answered TL_messages_getSponsoredMessages locally`, and no sponsored message sits below the latest post.
 - **Channel Suggestion:** open that channel's profile. The log shows `Answered TL_channels_getChannelRecommendations locally`, and there is no "Similar channels" tab.
 - **Sponsored Peer:** type 4 or more characters into the chat-list search. The log shows `Answered TL_contacts_getSponsoredPeers locally`.
 - **Promo Chat / Premium Promo:** the chat list shows no pinned promo chat and no Premium banner. Telegram refreshes promo data on its own schedule, so `Removed … from promo data` appears only when the server actually sends such content.
-- **Live toggles:** switch an Ad kind off in Origram's settings while Telegram keeps running. Its `Answered …` line stops for new requests; switch it back on and the line returns.
+- **Live toggles:** with Telegram running, switch Sponsored messages off and open the channel. The server's ad shows up (proof that ads are being served). Leave the chat, switch it back on, and reopen the chat within five minutes. The ad is gone even though Telegram still has it cached.

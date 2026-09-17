@@ -23,6 +23,15 @@ object AdRemoval : Tweak {
                 "$TLRPC\$TL_messages_sponsoredMessagesEmpty",
             ) { context.isEnabled(Toggle.AD_SPONSORED_MESSAGE) }
         }
+        // Channel and bot chats read ads through a five-minute cache that never reaches the filter, so
+        // ads fetched while the toggle was off would keep showing. Null is the "nothing loaded" answer.
+        context.guard("Sponsored Message cache") {
+            val getSponsoredMessages = context.findClass("org.telegram.messenger.MessagesController")
+                .getDeclaredMethod("getSponsoredMessages", Long::class.javaPrimitiveType)
+            context.xposed.hook(getSponsoredMessages).intercept { chain ->
+                if (context.isEnabled(Toggle.AD_SPONSORED_MESSAGE)) null else chain.proceed()
+            }
+        }
 
         context.guard("Sponsored Peer") {
             filter.answerWithEmpty(
